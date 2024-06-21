@@ -9,7 +9,7 @@ import XCTest
 import RtMockMacros
 
 let testMacros: [String: Macro.Type] = [
-    "stringify": StringifyMacro.self,
+    "RtMock": RtMockMacro.self,
 ]
 #endif
 
@@ -18,27 +18,12 @@ final class RtMockTests: XCTestCase {
         #if canImport(RtMockMacros)
         assertMacroExpansion(
             """
-            #stringify(a + b)
+            @RtMock
+            protocol A{}
             """,
             expandedSource: """
-            (a + b, "a + b")
+            protocol A{}
             """,
-            macros: testMacros
-        )
-        #else
-        throw XCTSkip("macros are only supported when running tests for the host platform")
-        #endif
-    }
-
-    func testMacroWithStringLiteral() throws {
-        #if canImport(RtMockMacros)
-        assertMacroExpansion(
-            #"""
-            #stringify("Hello, \(name)")
-            """#,
-            expandedSource: #"""
-            ("Hello, \(name)", #""Hello, \(name)""#)
-            """#,
             macros: testMacros
         )
         #else
