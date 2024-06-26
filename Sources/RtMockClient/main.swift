@@ -1,4 +1,6 @@
 import RtMock
 
 @RtMock
-protocol A {}
+protocol A {
+   func foo(a: String) throws -> Void
+}

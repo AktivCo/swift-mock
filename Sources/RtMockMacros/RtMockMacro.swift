@@ -22,19 +22,31 @@ public struct RtMockMacro: PeerMacro {
         guard let protocolDecl = declaration.as(ProtocolDeclSyntax.self) else {
             throw RtMockError.onlyApplicableToProtocol
         }
-
-        return [DeclSyntax(
-            StructDeclSyntax(
-                name: .identifier("RtMock\(protocolDecl.name)"),
-                inheritanceClause: SwiftSyntax.InheritanceClauseSyntax(
-                    inheritedTypes: [
-                        InheritedTypeSyntax(type: IdentifierTypeSyntax(name: .identifier("\(protocolDecl.name)")))
-                    ]
-                ),
-            memberBlock: MemberBlockSyntax(stringLiteral: "{}")
-            )
+        
+        var n = StructDeclSyntax(
+            name: .identifier("RtMock\(protocolDecl.name)"),
+            inheritanceClause: SwiftSyntax.InheritanceClauseSyntax(
+                inheritedTypes: [
+                    InheritedTypeSyntax(type: IdentifierTypeSyntax(name: .identifier("\(protocolDecl.name)")))
+                ]
+            ),
+            memberBlockBuilder: {}
         )
-        ]
+        for member in protocolDecl.memberBlock.members {
+            guard let foo = member.decl.as(FunctionDeclSyntax.self) else {
+                continue
+            }
+
+            let funcDecl = DeclSyntax(stringLiteral: "\(member) { mocked_\(foo.name)()}")
+            let funcMember = MemberBlockItemSyntax(decl: funcDecl)
+            n.memberBlock.members.append(try MemberBlockItemSyntax(validating: funcMember))
+
+            let varDecl = DeclSyntax(stringLiteral: "var mocked_\(foo.name): () -> Void = {}")
+            let varMember = MemberBlockItemSyntax(decl: varDecl)
+            n.memberBlock.members.append(try MemberBlockItemSyntax(validating: varMember))
+        }
+
+        return [DeclSyntax(n)]
     }
 }
 
