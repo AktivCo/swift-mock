@@ -30,4 +30,24 @@ final class RtMockTests: XCTestCase {
         throw XCTSkip("macros are only supported when running tests for the host platform")
         #endif
     }
+
+    func testMacroOnStruct() throws {
+        #if canImport(RtMockMacros)
+        assertMacroExpansion(
+            """
+            @RtMock
+            struct A{}
+            """,
+            expandedSource: """
+            struct A{}
+            """,
+            diagnostics: [
+                DiagnosticSpec(message: RtMockError.onlyApplicableToProtocol.description, line: 1, column: 1)
+            ],
+            macros: testMacros
+        )
+        #else
+        throw XCTSkip("macros are only supported when running tests for the host platform")
+        #endif
+    }
 }
