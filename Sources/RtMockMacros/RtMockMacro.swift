@@ -19,11 +19,22 @@ public struct RtMockMacro: PeerMacro {
     public static func expansion(of node: SwiftSyntax.AttributeSyntax,
                                  providingPeersOf declaration: some SwiftSyntax.DeclSyntaxProtocol,
                                  in context: some SwiftSyntaxMacros.MacroExpansionContext) throws -> [SwiftSyntax.DeclSyntax] {
-        guard let _ = declaration.as(ProtocolDeclSyntax.self) else {
+        guard let protocolDecl = declaration.as(ProtocolDeclSyntax.self) else {
             throw RtMockError.onlyApplicableToProtocol
         }
 
-        return []
+        return [DeclSyntax(
+            StructDeclSyntax(
+                name: .identifier("RtMock\(protocolDecl.name)"),
+                inheritanceClause: SwiftSyntax.InheritanceClauseSyntax(
+                    inheritedTypes: [
+                        InheritedTypeSyntax(type: IdentifierTypeSyntax(name: .identifier("\(protocolDecl.name)")))
+                    ]
+                ),
+            memberBlock: MemberBlockSyntax(stringLiteral: "{}")
+            )
+        )
+        ]
     }
 }
 
