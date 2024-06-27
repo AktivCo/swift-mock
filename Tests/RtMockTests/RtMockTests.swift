@@ -24,7 +24,7 @@ final class RtMockTests: XCTestCase {
             expandedSource: """
             protocol A{}
 
-            struct RtMockA: A {
+            class RtMockA: A {
             }
             """,
             macros: testMacros
@@ -48,7 +48,7 @@ final class RtMockTests: XCTestCase {
                 func foo()
             }
 
-            struct RtMockA: A {
+            class RtMockA: A {
                 func foo() {
                     mocked_foo()
                 }

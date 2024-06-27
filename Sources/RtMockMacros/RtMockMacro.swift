@@ -23,7 +23,7 @@ public struct RtMockMacro: PeerMacro {
             throw RtMockError.onlyApplicableToProtocol
         }
         
-        var n = StructDeclSyntax(
+        var n = ClassDeclSyntax(
             name: .identifier("RtMock\(protocolDecl.name)"),
             inheritanceClause: SwiftSyntax.InheritanceClauseSyntax(
                 inheritedTypes: [
