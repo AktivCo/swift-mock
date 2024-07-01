@@ -34,7 +34,7 @@ final class RtMockTests: XCTestCase {
         #endif
     }
 
-    func testMacroMethodWithNoargumentsNoReturnValue() throws {
+    func testMacroMethodWithNoArgumentsNoReturnValue() throws {
         #if canImport(RtMockMacros)
         assertMacroExpansion(
             """
@@ -50,10 +50,149 @@ final class RtMockTests: XCTestCase {
 
             class RtMockA: A {
                 func foo() {
-                    mocked_foo()
+                    mocked_foo!()
                 }
-                var mocked_foo: () -> Void = {
+                var mocked_foo: (() -> Void)?
+            }
+            """,
+            macros: testMacros
+        )
+        #else
+        throw XCTSkip("macros are only supported when running tests for the host platform")
+        #endif
+    }
+
+    func testMacroMethodWithNoArgumentsWithReturnValue() throws {
+        #if canImport(RtMockMacros)
+        assertMacroExpansion(
+            """
+            @RtMock
+            protocol A{
+                func foo() -> String
+            }
+            """,
+            expandedSource: """
+            protocol A{
+                func foo() -> String
+            }
+
+            class RtMockA: A {
+                func foo() -> String {
+                    mocked_foo!()
                 }
+                var mocked_foo: (() -> String)?
+            }
+            """,
+            macros: testMacros
+        )
+        #else
+        throw XCTSkip("macros are only supported when running tests for the host platform")
+        #endif
+    }
+
+    func testMacroMethodWithOneArgumentNoReturnValue() throws {
+        #if canImport(RtMockMacros)
+        assertMacroExpansion(
+            """
+            @RtMock
+            protocol A{
+                func foo(a: String)
+            }
+            """,
+            expandedSource: """
+            protocol A{
+                func foo(a: String)
+            }
+
+            class RtMockA: A {
+                func foo(a: String) {
+                    mocked_foo!(a)
+                }
+                var mocked_foo: ((String) -> Void)?
+            }
+            """,
+            macros: testMacros
+        )
+        #else
+        throw XCTSkip("macros are only supported when running tests for the host platform")
+        #endif
+    }
+
+    func testMacroMethodWithOneOptionalArgumentNoReturnValue() throws {
+        #if canImport(RtMockMacros)
+        assertMacroExpansion(
+            """
+            @RtMock
+            protocol A{
+                func foo(a: String?)
+            }
+            """,
+            expandedSource: """
+            protocol A{
+                func foo(a: String?)
+            }
+
+            class RtMockA: A {
+                func foo(a: String?) {
+                    mocked_foo!(a)
+                }
+                var mocked_foo: ((String?) -> Void)?
+            }
+            """,
+            macros: testMacros
+        )
+        #else
+        throw XCTSkip("macros are only supported when running tests for the host platform")
+        #endif
+    }
+
+    func testMacroMethodWithOneNamedArgumentNoReturnValue() throws {
+        #if canImport(RtMockMacros)
+        assertMacroExpansion(
+            """
+            @RtMock
+            protocol A{
+                func foo(a b: String)
+            }
+            """,
+            expandedSource: """
+            protocol A{
+                func foo(a b: String)
+            }
+
+            class RtMockA: A {
+                func foo(a b: String) {
+                    mocked_foo!(b)
+                }
+                var mocked_foo: ((String) -> Void)?
+            }
+            """,
+            macros: testMacros
+        )
+        #else
+        throw XCTSkip("macros are only supported when running tests for the host platform")
+        #endif
+    }
+
+    func testMacroMethodWithTwoArgumentsNoReturnValue() throws {
+        #if canImport(RtMockMacros)
+        assertMacroExpansion(
+            """
+            @RtMock
+            protocol A{
+                func foo(a: String, b: Int)
+            }
+            """,
+            expandedSource: """
+            protocol A{
+                func foo(a: String, b: Int)
+            }
+
+            class RtMockA: A {
+                func foo(a: String, b: Int) {
+                    mocked_foo!(a, b)
+                }
+                var mocked_foo: ((String, Int) -> Void)?
             }
             """,
             macros: testMacros

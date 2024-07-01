@@ -15,6 +15,30 @@ public enum RtMockError: Error, CustomStringConvertible {
     }
 }
 
+enum TrivialToken {
+    case rightParen
+    case leftParen
+    case colon
+    case comma
+
+    var kind: TokenKind {
+        switch self {
+        case .rightParen:
+            TokenKind.rightParen
+        case .leftParen:
+            TokenKind.leftParen
+        case .colon:
+            TokenKind.colon
+        case .comma:
+            TokenKind.comma
+        }
+    }
+
+    var token: TokenSyntax {
+        TokenSyntax(self.kind, leadingTrivia: [], trailingTrivia: [], presence: .present)
+    }
+}
+
 public struct RtMockMacro: PeerMacro {
     public static func expansion(of node: SwiftSyntax.AttributeSyntax,
                                  providingPeersOf declaration: some SwiftSyntax.DeclSyntaxProtocol,
@@ -23,7 +47,7 @@ public struct RtMockMacro: PeerMacro {
             throw RtMockError.onlyApplicableToProtocol
         }
         
-        var n = ClassDeclSyntax(
+        var result = ClassDeclSyntax(
             name: .identifier("RtMock\(protocolDecl.name)"),
             inheritanceClause: SwiftSyntax.InheritanceClauseSyntax(
                 inheritedTypes: [
@@ -32,21 +56,45 @@ public struct RtMockMacro: PeerMacro {
             ),
             memberBlockBuilder: {}
         )
+
         for member in protocolDecl.memberBlock.members {
-            guard let foo = member.decl.as(FunctionDeclSyntax.self) else {
+            guard let protoFunc = member.decl.as(FunctionDeclSyntax.self) else {
                 continue
             }
 
-            let funcDecl = DeclSyntax(stringLiteral: "\(member) { mocked_\(foo.name)()}")
-            let funcMember = MemberBlockItemSyntax(decl: funcDecl)
-            n.memberBlock.members.append(try MemberBlockItemSyntax(validating: funcMember))
+            // Create arg list for mock call/declaration
+            var callArgs = LabeledExprListSyntax()
+            var declArgs = TupleTypeElementListSyntax()
+            protoFunc.signature.parameterClause.parameters.forEach { param in
+                let name = param.secondName ?? param.firstName
+                callArgs.append(LabeledExprSyntax(expression: ExprSyntax("\(name)"), trailingComma: param.trailingComma))
+                declArgs.append(TupleTypeElementSyntax(type: param.type, trailingComma: param.trailingComma))
+            }
 
-            let varDecl = DeclSyntax(stringLiteral: "var mocked_\(foo.name): () -> Void = {}")
+            // Define mock call inside func body
+            var classFunc = protoFunc
+            classFunc.body = CodeBlockSyntax {
+                FunctionCallExprSyntax(calledExpression: ExprSyntax("mocked_\(protoFunc.name)!"),
+                                       leftParen: TrivialToken.leftParen.token,
+                                       arguments: callArgs,
+                                       rightParen: TrivialToken.rightParen.token
+                )
+            }
+
+            result.memberBlock.members.append(try MemberBlockItemSyntax(validating: MemberBlockItemSyntax(decl: classFunc)))
+
+            // Create arg list for mock declaration
+            let closureType = FunctionTypeSyntax(leadingTrivia: "(",
+                                                 parameters: declArgs,
+                                                 returnClause: protoFunc.signature.returnClause ?? ReturnClauseSyntax(type: TypeSyntax(stringLiteral: "Void")),
+                                                 trailingTrivia: ")")
+            let optionalClosure = OptionalTypeSyntax(wrappedType: closureType)
+            let varDecl = VariableDeclSyntax(.var, name: "mocked_\(protoFunc.name)", type: TypeAnnotationSyntax(type: optionalClosure))
             let varMember = MemberBlockItemSyntax(decl: varDecl)
-            n.memberBlock.members.append(try MemberBlockItemSyntax(validating: varMember))
+            result.memberBlock.members.append(try MemberBlockItemSyntax(validating: varMember))
         }
 
-        return [DeclSyntax(n)]
+        return [DeclSyntax(result)]
     }
 }
 
