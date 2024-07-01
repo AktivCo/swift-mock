@@ -62,6 +62,34 @@ final class RtMockTests: XCTestCase {
         #endif
     }
 
+    func testMacroMethodWithNoArgumentsNoReturnValueThrows() throws {
+        #if canImport(RtMockMacros)
+        assertMacroExpansion(
+            """
+            @RtMock
+            protocol A{
+                func foo() throws
+            }
+            """,
+            expandedSource: """
+            protocol A{
+                func foo() throws
+            }
+
+            class RtMockA: A {
+                func foo() throws {
+                    try mocked_foo!()
+                }
+                var mocked_foo: (() throws -> Void)?
+            }
+            """,
+            macros: testMacros
+        )
+        #else
+        throw XCTSkip("macros are only supported when running tests for the host platform")
+        #endif
+    }
+
     func testMacroMethodWithNoArgumentsWithReturnValue() throws {
         #if canImport(RtMockMacros)
         assertMacroExpansion(

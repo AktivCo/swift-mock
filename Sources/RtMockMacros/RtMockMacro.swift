@@ -74,7 +74,8 @@ public struct RtMockMacro: PeerMacro {
             // Define mock call inside func body
             var classFunc = protoFunc
             classFunc.body = CodeBlockSyntax {
-                FunctionCallExprSyntax(calledExpression: ExprSyntax("mocked_\(protoFunc.name)!"),
+                let tryKeyword = (protoFunc.signature.effectSpecifiers?.throwsSpecifier == nil) ? "" : "try "
+                FunctionCallExprSyntax(calledExpression: ExprSyntax("\(raw: tryKeyword)mocked_\(protoFunc.name)!"),
                                        leftParen: TrivialToken.leftParen.token,
                                        arguments: callArgs,
                                        rightParen: TrivialToken.rightParen.token
@@ -84,8 +85,11 @@ public struct RtMockMacro: PeerMacro {
             result.memberBlock.members.append(try MemberBlockItemSyntax(validating: MemberBlockItemSyntax(decl: classFunc)))
 
             // Create arg list for mock declaration
+
+            
             let closureType = FunctionTypeSyntax(leadingTrivia: "(",
                                                  parameters: declArgs,
+                                                 effectSpecifiers: TypeEffectSpecifiersSyntax(throwsSpecifier: protoFunc.signature.effectSpecifiers?.throwsSpecifier),
                                                  returnClause: protoFunc.signature.returnClause ?? ReturnClauseSyntax(type: TypeSyntax(stringLiteral: "Void")),
                                                  trailingTrivia: ")")
             let optionalClosure = OptionalTypeSyntax(wrappedType: closureType)
