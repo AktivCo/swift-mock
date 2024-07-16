@@ -46,7 +46,7 @@ public struct RtMockMacro: PeerMacro {
         guard let protocolDecl = declaration.as(ProtocolDeclSyntax.self) else {
             throw RtMockError.onlyApplicableToProtocol
         }
-        
+
         var result = ClassDeclSyntax(
             name: .identifier("RtMock\(protocolDecl.name)"),
             inheritanceClause: SwiftSyntax.InheritanceClauseSyntax(
@@ -75,6 +75,7 @@ public struct RtMockMacro: PeerMacro {
             var classFunc = protoFunc
             classFunc.body = CodeBlockSyntax {
                 let tryKeyword = (protoFunc.signature.effectSpecifiers?.throwsSpecifier == nil) ? "" : "try "
+                // swiftlint:disable:next one_space_after_closing_brace
                 FunctionCallExprSyntax(calledExpression: ExprSyntax("\(raw: tryKeyword)mocked_\(protoFunc.name)!"),
                                        leftParen: TrivialToken.leftParen.token,
                                        arguments: callArgs,
@@ -85,12 +86,12 @@ public struct RtMockMacro: PeerMacro {
             result.memberBlock.members.append(try MemberBlockItemSyntax(validating: MemberBlockItemSyntax(decl: classFunc)))
 
             // Create arg list for mock declaration
-
-            
+            let effectSpecifiers = TypeEffectSpecifiersSyntax(throwsSpecifier: protoFunc.signature.effectSpecifiers?.throwsSpecifier)
+            let returnClause = protoFunc.signature.returnClause ?? ReturnClauseSyntax(type: TypeSyntax(stringLiteral: "Void"))
             let closureType = FunctionTypeSyntax(leadingTrivia: "(",
                                                  parameters: declArgs,
-                                                 effectSpecifiers: TypeEffectSpecifiersSyntax(throwsSpecifier: protoFunc.signature.effectSpecifiers?.throwsSpecifier),
-                                                 returnClause: protoFunc.signature.returnClause ?? ReturnClauseSyntax(type: TypeSyntax(stringLiteral: "Void")),
+                                                 effectSpecifiers: effectSpecifiers,
+                                                 returnClause: returnClause,
                                                  trailingTrivia: ")")
             let optionalClosure = OptionalTypeSyntax(wrappedType: closureType)
             let varDecl = VariableDeclSyntax(.var, name: "mocked_\(protoFunc.name)", type: TypeAnnotationSyntax(type: optionalClosure))
@@ -105,6 +106,6 @@ public struct RtMockMacro: PeerMacro {
 @main
 struct RtMockPlugin: CompilerPlugin {
     let providingMacros: [Macro.Type] = [
-        RtMockMacro.self,
+        RtMockMacro.self
     ]
 }

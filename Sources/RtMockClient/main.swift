@@ -1,7 +1,7 @@
 import RtMock
 
 @RtMock
-protocol A {
+protocol MockFactory {
     func f1()
     func f2(a: String)
     func f3(a: String?)
