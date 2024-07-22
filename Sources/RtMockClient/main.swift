@@ -9,4 +9,5 @@ protocol MockFactory {
     func f5(a: String, b: Int)
     func f6() -> String
     func f7() throws
+    var v1: Int { get }
 }

@@ -16,7 +16,7 @@ let testMacros: [String: Macro.Type] = [
 ]
 #endif
 
-final class RtMockTests: XCTestCase {
+final class ProtocolMethodsTests: XCTestCase {
     func testMacroEmptyProtocol() throws {
         #if canImport(RtMockMacros)
         assertMacroExpansion(
