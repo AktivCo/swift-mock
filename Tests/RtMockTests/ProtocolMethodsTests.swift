@@ -22,12 +22,12 @@ final class ProtocolMethodsTests: XCTestCase {
         assertMacroExpansion(
             """
             @RtMock
-            protocol MockFactory{}
+            protocol A {}
             """,
             expandedSource: """
-            protocol MockFactory{}
+            protocol A {}
 
-            class RtMockA: MockFactory {
+            class RtMockA: A {
             }
             """,
             macros: testMacros
@@ -42,16 +42,16 @@ final class ProtocolMethodsTests: XCTestCase {
         assertMacroExpansion(
             """
             @RtMock
-            protocol MockFactory{
+            protocol A {
                 func foo()
             }
             """,
             expandedSource: """
-            protocol MockFactory{
+            protocol A {
                 func foo()
             }
 
-            class RtMockA: MockFactory {
+            class RtMockA: A {
                 func foo() {
                     mocked_foo!()
                 }
@@ -70,16 +70,16 @@ final class ProtocolMethodsTests: XCTestCase {
         assertMacroExpansion(
             """
             @RtMock
-            protocol MockFactory{
+            protocol A {
                 func foo() throws
             }
             """,
             expandedSource: """
-            protocol MockFactory{
+            protocol A {
                 func foo() throws
             }
 
-            class RtMockA: MockFactory {
+            class RtMockA: A {
                 func foo() throws {
                     try mocked_foo!()
                 }
@@ -98,16 +98,16 @@ final class ProtocolMethodsTests: XCTestCase {
         assertMacroExpansion(
             """
             @RtMock
-            protocol MockFactory{
+            protocol A {
                 func foo() -> String
             }
             """,
             expandedSource: """
-            protocol MockFactory{
+            protocol A {
                 func foo() -> String
             }
 
-            class RtMockA: MockFactory {
+            class RtMockA: A {
                 func foo() -> String {
                     mocked_foo!()
                 }
@@ -126,16 +126,16 @@ final class ProtocolMethodsTests: XCTestCase {
         assertMacroExpansion(
             """
             @RtMock
-            protocol MockFactory{
+            protocol A {
                 func foo(a: String)
             }
             """,
             expandedSource: """
-            protocol MockFactory{
+            protocol A {
                 func foo(a: String)
             }
 
-            class RtMockA: MockFactory {
+            class RtMockA: A {
                 func foo(a: String) {
                     mocked_foo!(a)
                 }
@@ -154,16 +154,16 @@ final class ProtocolMethodsTests: XCTestCase {
         assertMacroExpansion(
             """
             @RtMock
-            protocol MockFactory{
+            protocol A {
                 func foo(a: String?)
             }
             """,
             expandedSource: """
-            protocol MockFactory{
+            protocol A {
                 func foo(a: String?)
             }
 
-            class RtMockA: MockFactory {
+            class RtMockA: A {
                 func foo(a: String?) {
                     mocked_foo!(a)
                 }
@@ -182,16 +182,16 @@ final class ProtocolMethodsTests: XCTestCase {
         assertMacroExpansion(
             """
             @RtMock
-            protocol MockFactory{
+            protocol A {
                 func foo(a b: String)
             }
             """,
             expandedSource: """
-            protocol MockFactory{
+            protocol A {
                 func foo(a b: String)
             }
 
-            class RtMockA: MockFactory {
+            class RtMockA: A {
                 func foo(a b: String) {
                     mocked_foo!(b)
                 }
@@ -210,16 +210,16 @@ final class ProtocolMethodsTests: XCTestCase {
         assertMacroExpansion(
             """
             @RtMock
-            protocol MockFactory{
+            protocol A {
                 func foo(a: String, b: Int)
             }
             """,
             expandedSource: """
-            protocol MockFactory{
+            protocol A {
                 func foo(a: String, b: Int)
             }
 
-            class RtMockA: MockFactory {
+            class RtMockA: A {
                 func foo(a: String, b: Int) {
                     mocked_foo!(a, b)
                 }
@@ -238,10 +238,10 @@ final class ProtocolMethodsTests: XCTestCase {
         assertMacroExpansion(
             """
             @RtMock
-            struct MockFactory{}
+            struct A {}
             """,
             expandedSource: """
-            struct MockFactory{}
+            struct A {}
             """,
             diagnostics: [
                 DiagnosticSpec(message: RtMockError.onlyApplicableToProtocol.description, line: 1, column: 1)

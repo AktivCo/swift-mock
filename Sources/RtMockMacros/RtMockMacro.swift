@@ -104,7 +104,8 @@ public struct RtMockMacro: PeerMacro {
 
                 let mockedVarName: PatternSyntax = "mocked_\(identifier)"
                 let computedProperty = try VariableDeclSyntax("var \(identifier): \(type)") {
-                  StmtSyntax("    return \(mockedVarName)! ")
+                    // swiftlint:disable:next no_more_than_one_consecutive_space
+                    StmtSyntax("    return \(mockedVarName)! ")
                 }
                 result.memberBlock.members.append(try MemberBlockItemSyntax(validating: MemberBlockItemSyntax(decl: computedProperty)))
 
