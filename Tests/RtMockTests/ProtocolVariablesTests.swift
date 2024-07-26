@@ -68,4 +68,32 @@ final class ProtocolVariablesTests: XCTestCase {
         throw XCTSkip("macros are only supported when running tests for the host platform")
 #endif
     }
+
+    func testMacroVariableWithOptionalParameter() throws {
+#if canImport(RtMockMacros)
+        assertMacroExpansion(
+            """
+            @RtMock
+            protocol A {
+                var someVar: SomeStrangeType? { get }
+            }
+            """,
+            expandedSource: """
+            protocol A {
+                var someVar: SomeStrangeType? { get }
+            }
+
+            class RtMockA: A {
+                var someVar: SomeStrangeType? {
+                    return mocked_someVar!
+                }
+                var mocked_someVar: SomeStrangeType??
+            }
+            """,
+            macros: testMacros
+        )
+#else
+        throw XCTSkip("macros are only supported when running tests for the host platform")
+#endif
+    }
 }

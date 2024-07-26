@@ -3,7 +3,7 @@ strict: true
 vertical_whitespace:
   max_empty_lines: 2
 
-line_length: 150
+line_length: 180
 
 opt_in_rules:
   - sorted_imports

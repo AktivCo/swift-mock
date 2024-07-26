@@ -40,6 +40,23 @@ enum TrivialToken {
 }
 
 public struct RtMockMacro: PeerMacro {
+    private static func createNameFromType(_ type: String) -> String {
+        var result: String = type.replacingOccurrences(of: "->", with: "")
+            .replacingOccurrences(of: "?", with: "Optional")
+            .trimmingCharacters(in: .whitespaces)
+        if result.contains("<") {
+            result = result.replacingOccurrences(of: "<", with: "Of_")
+                .replacingOccurrences(of: ">", with: "_")
+        } else if result.contains("[") {
+            result = result.replacingOccurrences(of: "[", with: "ArrayOf_")
+                .replacingOccurrences(of: "]", with: "_")
+        }
+        if result.last == "_" {
+            result.removeLast()
+        }
+        return result
+    }
+
     public static func expansion(of node: SwiftSyntax.AttributeSyntax,
                                  providingPeersOf declaration: some SwiftSyntax.DeclSyntaxProtocol,
                                  in context: some SwiftSyntaxMacros.MacroExpansionContext) throws -> [SwiftSyntax.DeclSyntax] {
@@ -59,23 +76,46 @@ public struct RtMockMacro: PeerMacro {
 
         for member in protocolDecl.memberBlock.members {
             if let protoFunc = member.decl.as(FunctionDeclSyntax.self) {
+                var mockedVarName = "mocked_\(protoFunc.name)"
+                let returnType = createNameFromType("\(protoFunc.signature.returnClause ?? ReturnClauseSyntax(type: TypeSyntax(stringLiteral: "Void")))")
+
                 // Create arg list for mock call/declaration
                 var callArgs = LabeledExprListSyntax()
+                var mockedCallArgs = LabeledExprListSyntax()
                 var declArgs = TupleTypeElementListSyntax()
                 protoFunc.signature.parameterClause.parameters.forEach { param in
-                    let name = param.secondName ?? param.firstName
-                    callArgs.append(LabeledExprSyntax(expression: ExprSyntax("\(name)"), trailingComma: param.trailingComma))
+                    let label: TokenSyntax?
+                    let expression: ExprSyntax
+
+                    let type = createNameFromType("\(param.type)")
+                    if let secondName = param.secondName {
+                        let name = "\(secondName)"
+                        mockedVarName += "_\(param.firstName.trimmed)\(name.capitalized)\(type)"
+                        label = "\(param.firstName)"
+                        expression = ExprSyntax("\(secondName)")
+                    } else {
+                        mockedVarName += "_\(param.firstName)\(type)"
+                        label = nil
+                        expression = ExprSyntax("\(param.firstName)")
+                    }
+                    mockedCallArgs.append(LabeledExprSyntax(expression: expression, trailingComma: param.trailingComma))
+                    callArgs.append(LabeledExprSyntax(label: label,
+                                                      expression: expression,
+                                                      trailingComma: param.trailingComma))
                     declArgs.append(TupleTypeElementSyntax(type: param.type, trailingComma: param.trailingComma))
                 }
+                let asyncKeyword = (protoFunc.signature.effectSpecifiers?.asyncSpecifier == nil) ? "" : "async_"
+                mockedVarName += "_\(asyncKeyword)\(returnType)"
 
                 // Define mock call inside func body
                 var classFunc = protoFunc
                 classFunc.body = CodeBlockSyntax {
                     let tryKeyword = (protoFunc.signature.effectSpecifiers?.throwsSpecifier == nil) ? "" : "try "
+                    let asyncKeyword = (protoFunc.signature.effectSpecifiers?.asyncSpecifier == nil) ? "" : "await "
                     // swiftlint:disable:next one_space_after_closing_brace
-                    FunctionCallExprSyntax(calledExpression: ExprSyntax("\(raw: tryKeyword)mocked_\(protoFunc.name)!"),
+                    FunctionCallExprSyntax(calledExpression: ExprSyntax("\(raw: tryKeyword)\(raw: asyncKeyword)\(raw: mockedVarName)!"),
                                            leftParen: TrivialToken.leftParen.token,
-                                           arguments: callArgs,
+                                           arguments: mockedCallArgs,
                                            rightParen: TrivialToken.rightParen.token
                     )
                 }
@@ -83,7 +123,8 @@ public struct RtMockMacro: PeerMacro {
                 result.memberBlock.members.append(try MemberBlockItemSyntax(validating: MemberBlockItemSyntax(decl: classFunc)))
 
                 // Create arg list for mock declaration
-                let effectSpecifiers = TypeEffectSpecifiersSyntax(throwsSpecifier: protoFunc.signature.effectSpecifiers?.throwsSpecifier)
+                let effectSpecifiers = TypeEffectSpecifiersSyntax(asyncSpecifier: protoFunc.signature.effectSpecifiers?.asyncSpecifier,
+                                                                  throwsSpecifier: protoFunc.signature.effectSpecifiers?.throwsSpecifier)
                 let returnClause = protoFunc.signature.returnClause ?? ReturnClauseSyntax(type: TypeSyntax(stringLiteral: "Void"))
                 let closureType = FunctionTypeSyntax(leadingTrivia: "(",
                                                      parameters: declArgs,
@@ -91,7 +132,7 @@ public struct RtMockMacro: PeerMacro {
                                                      returnClause: returnClause,
                                                      trailingTrivia: ")")
                 let optionalClosure = OptionalTypeSyntax(wrappedType: closureType)
-                let varDecl = VariableDeclSyntax(.var, name: "mocked_\(protoFunc.name)", type: TypeAnnotationSyntax(type: optionalClosure))
+                let varDecl = VariableDeclSyntax(.var, name: " \(raw: mockedVarName)", type: TypeAnnotationSyntax(type: optionalClosure))
                 let varMember = MemberBlockItemSyntax(decl: varDecl)
                 result.memberBlock.members.append(try MemberBlockItemSyntax(validating: varMember))
             } else if let protoVariable = member.decl.as(VariableDeclSyntax.self) {
