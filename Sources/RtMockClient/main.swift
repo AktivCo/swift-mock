@@ -12,6 +12,7 @@ protocol MockFactory {
     func f8(a: [String])
     func f8(a: Set<Int>)
     func f9() -> Int?
+    func f10() -> AsyncThrowingStream<UInt, Never>
 
     func f_overloaded()
     func f_overloaded() async

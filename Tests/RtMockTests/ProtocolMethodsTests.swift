@@ -322,13 +322,13 @@ final class ProtocolMethodsTests: XCTestCase {
             @RtMock
             protocol A {
                 func foo(a: WrappedPointer<OpaquePointer??>) -> Void
-                func foo(a: WrappedPointer<OpaquePointer?>?) -> Void
+                func foo(a: WrappedPointer<OpaquePointer?>?) -> T<A, B>
             }
             """,
             expandedSource: """
             protocol A {
                 func foo(a: WrappedPointer<OpaquePointer??>) -> Void
-                func foo(a: WrappedPointer<OpaquePointer?>?) -> Void
+                func foo(a: WrappedPointer<OpaquePointer?>?) -> T<A, B>
             }
 
             class RtMockA: A {
@@ -336,10 +336,10 @@ final class ProtocolMethodsTests: XCTestCase {
                     mocked_foo_aWrappedPointerOf_OpaquePointerOptionalOptional_Void!(a)
                 }
                 var mocked_foo_aWrappedPointerOf_OpaquePointerOptionalOptional_Void: ((WrappedPointer<OpaquePointer??>) -> Void)?
-                func foo(a: WrappedPointer<OpaquePointer?>?) -> Void {
-                    mocked_foo_aWrappedPointerOf_OpaquePointerOptional_Optional_Void!(a)
+                func foo(a: WrappedPointer<OpaquePointer?>?) -> T<A, B> {
+                    mocked_foo_aWrappedPointerOf_OpaquePointerOptional_Optional_TOf_AB!(a)
                 }
-                var mocked_foo_aWrappedPointerOf_OpaquePointerOptional_Optional_Void: ((WrappedPointer<OpaquePointer?>?) -> Void)?
+                var mocked_foo_aWrappedPointerOf_OpaquePointerOptional_Optional_TOf_AB: ((WrappedPointer<OpaquePointer?>?) -> T<A, B>)?
             }
             """,
             macros: testMacros

@@ -41,9 +41,11 @@ enum TrivialToken {
 
 public struct RtMockMacro: PeerMacro {
     private static func createNameFromType(_ type: String) -> String {
-        var result: String = type.replacingOccurrences(of: "->", with: "")
+        var result: String = type
+            .replacingOccurrences(of: "->", with: "")
+            .replacingOccurrences(of: ",", with: "")
+            .replacingOccurrences(of: " ", with: "")
             .replacingOccurrences(of: "?", with: "Optional")
-            .trimmingCharacters(in: .whitespaces)
         if result.contains("<") {
             result = result.replacingOccurrences(of: "<", with: "Of_")
                 .replacingOccurrences(of: ">", with: "_")
